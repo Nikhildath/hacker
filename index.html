@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hacker Admin Panel</title>
+  <style>
+    body {
+      background-color: black;
+      color: lime;
+      font-family: 'Courier New', monospace;
+      margin: 0;
+      padding: 20px;
+    }
+    .center {
+      max-width: 500px;
+      margin: auto;
+      margin-top: 100px;
+      text-align: center;
+    }
+    input, button {
+      background: black;
+      color: lime;
+      border: 1px solid lime;
+      padding: 10px;
+      width: 80%;
+      margin-top: 10px;
+    }
+    #dashboard {
+      display: none;
+    }
+    .box {
+      border: 1px solid lime;
+      padding: 20px;
+      margin-top: 20px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="center" id="login">
+    <h1>🔐 Hacker Panel Login</h1>
+    <input type="text" id="username" placeholder="Username"/><br>
+    <input type="password" id="password" placeholder="Password"/><br>
+    <button onclick="login()">Login</button>
+    <p id="error" style="color: red;"></p>
+  </div>
+
+  <div class="center" id="dashboard">
+    <h1>👨‍💻 Welcome, Nikhil</h1>
+    <div class="box">
+      <strong>🌐 Your IP:</strong> <span id="ip">Loading...</span><br>
+      <strong>📍 Location:</strong> <span id="location">Loading...</span>
+    </div>
+
+    <div class="box">
+      <strong>⛅ Weather:</strong><br>
+      <pre id="weather">Loading...</pre>
+    </div>
+  </div>
+
+  <script>
+    function login() {
+      const user = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+      if (user === 'nikhil' && pass === 'nikhildath2008') {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        loadData();
+      } else {
+        document.getElementById('error').textContent = 'Access Denied 😈';
+      }
+    }
+
+    function loadData() {
+      fetch('https://ipapi.co/json/')
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('ip').textContent = data.ip;
+          document.getElementById('location').textContent = `${data.city}, ${data.region}, ${data.country_name}`;
+          fetch(`https://wttr.in/${data.city}?format=3`)
+            .then(res => res.text())
+            .then(weather => {
+              document.getElementById('weather').textContent = weather;
+            });
+        });
+    }
+  </script>
+
+</body>
+</html>

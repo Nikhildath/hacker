@@ -1,13 +1,12 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Hacker Admin Panel</title>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    body, html {
+    html, body {
       margin: 0;
       padding: 0;
       background: black;
@@ -21,7 +20,7 @@
       z-index: -1;
     }
     .center {
-      max-width: 600px;
+      max-width: 800px;
       margin: auto;
       padding: 20px;
     }
@@ -35,14 +34,17 @@
     }
     #dashboard { display: none; }
     #map { height: 250px; margin-top: 10px; }
-    #output { white-space: pre-wrap; background: #111; padding: 10px; }
+    #output, #filetree, #commands, #coderain, #virus-output {
+      white-space: pre-wrap;
+      background: #111;
+      padding: 10px;
+      margin-top: 10px;
+    }
     .typewriter-text::after { content: '|'; animation: blink 1s step-end infinite; }
     @keyframes blink { 50% { opacity: 0; } }
   </style>
 </head>
-<body>
-
-<canvas id="matrix"></canvas>
+<body><canvas id="matrix"></canvas>
 
 <div class="center" id="login">
   <h2>🔐 Login</h2>
@@ -50,115 +52,157 @@
   <input type="password" id="pass" placeholder="Password" />
   <button onclick="login()">Enter</button>
   <div id="login-error" style="color: red;"></div>
-</div>
-
-<div class="center" id="dashboard">
-  <h2 class="typewriter-text" id="welcome-text"></h2>
+</div><div class="center" id="dashboard">
+  <h2 class="typewriter-text" id="welcome-text"></h2><button onclick="toggleTheme()">🌓 Toggle Hacker Theme</button>
 
   <h3>🌐 Your IP & Location</h3>
   <div id="info">Loading...</div>
-  <div id="map"></div>
-
-  <h3>⛅ Weather</h3>
-  <pre id="weather">Loading...</pre>
-
-  <h3>🖥️ System Info</h3>
-  <pre id="sysinfo"></pre>
-
-  <h3>💻 JavaScript Command Executor</h3>
+  <div id="map"></div>  <h3>⛅ Weather</h3>
+  <pre id="weather">Loading...</pre>  <h3>🖥️ System Info</h3>
+  <pre id="sysinfo"></pre>  <h3>💻 JavaScript Command Executor</h3>
   <textarea id="js-input" rows="4" placeholder="Type JS command like: alert('Hello');"></textarea>
   <button onclick="runJS()">Run JS</button>
-  <pre id="output"></pre>
-</div>
+  <pre id="output"></pre>  <h3>👾 Fake Virus Loader</h3>
+  <button onclick="startVirus()">💣 Activate</button>
+  <pre id="virus-output"></pre>  <h3>📂 Fake File Tree</h3>
+  <pre id="filetree">
+/home
+├── nikhil
+│   ├── secrets.txt
+│   ├── passwords.db
+│   └── projects
+│       ├── hackerpanel.html
+│       └── virus.js
+  </pre>  <h3>🧠 Auto Code Typer</h3>
+  <pre id="coderain"></pre>  <h3>📜 Hacker Commands Generator</h3>
+  <button onclick="randomCmd()">💡 Generate Command</button>
+  <pre id="commands"></pre>
+</div><script>
+// Matrix animation
+const canvas = document.getElementById("matrix");
+const ctx = canvas.getContext("2d");
+canvas.height = window.innerHeight;
+canvas.width = window.innerWidth;
+let chars = "アカサタナ0123456789".split("");
+let fontSize = 14;
+let columns = canvas.width / fontSize;
+let drops = Array.from({ length: columns }).fill(1);
+function drawMatrix() {
+  ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "lime";
+  ctx.font = fontSize + "px monospace";
+  for (let i = 0; i < drops.length; i++) {
+    let text = chars[Math.floor(Math.random() * chars.length)];
+    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+    if (drops[i] * fontSize > canvas.height || Math.random() > 0.95) drops[i] = 0;
+    drops[i]++;
+  }
+}
+setInterval(drawMatrix, 33);
 
-<script>
-  // Matrix background
-  const canvas = document.getElementById("matrix");
-  const ctx = canvas.getContext("2d");
-  canvas.height = window.innerHeight;
-  canvas.width = window.innerWidth;
-  let chars = "アカサタナハマヤラワ0123456789".split("");
-  let font_size = 14;
-  let columns = canvas.width / font_size;
-  let drops = Array.from({ length: columns }).fill(1);
-  function drawMatrix() {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "lime";
-    ctx.font = font_size + "px monospace";
-    for (let i = 0; i < drops.length; i++) {
-      let text = chars[Math.floor(Math.random() * chars.length)];
-      ctx.fillText(text, i * font_size, drops[i] * font_size);
-      if (drops[i] * font_size > canvas.height || Math.random() > 0.95)
-        drops[i] = 0;
-      drops[i]++;
+function login() {
+  const u = document.getElementById("user").value;
+  const p = document.getElementById("pass").value;
+  if (u === "nikhil" && p === "nikhildath2008") {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    startDashboard();
+  } else {
+    document.getElementById("login-error").innerText = "❌ Wrong credentials";
+  }
+}
+
+function typeWriter(text, elId) {
+  let i = 0;
+  function type() {
+    if (i < text.length) {
+      document.getElementById(elId).textContent += text.charAt(i);
+      i++;
+      setTimeout(type, 50);
     }
   }
-  setInterval(drawMatrix, 33);
+  type();
+}
 
-  // Login
-  function login() {
-    const u = document.getElementById("user").value;
-    const p = document.getElementById("pass").value;
-    if (u === "nikhil" && p === "nikhildath2008") {
-      document.getElementById("login").style.display = "none";
-      document.getElementById("dashboard").style.display = "block";
-      startDashboard();
-    } else {
-      document.getElementById("login-error").innerText = "❌ Wrong credentials";
+function startDashboard() {
+  typeWriter("Welcome, Nikhil 🧠 Root Access Granted", "welcome-text");
+  fetch("https://ipapi.co/json/")
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("info").innerHTML = `IP: ${data.ip}<br>Location: ${data.city}, ${data.region}, ${data.country_name}`;
+      const map = L.map("map").setView([data.latitude, data.longitude], 10);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "Map data © OpenStreetMap"
+      }).addTo(map);
+      L.marker([data.latitude, data.longitude]).addTo(map);
+      fetch(`https://wttr.in/${data.city}?format=3`)
+        .then(r => r.text())
+        .then(w => document.getElementById("weather").textContent = w);
+    });
+  document.getElementById("sysinfo").textContent =
+    `OS: ${navigator.platform}\nBrowser: ${navigator.userAgent}\nScreen: ${screen.width}x${screen.height}`;
+  autoCodeTyper();
+}
+
+function runJS() {
+  const input = document.getElementById("js-input").value;
+  try {
+    const result = eval(input);
+    document.getElementById("output").textContent = result ?? "✅ Code executed.";
+  } catch (e) {
+    document.getElementById("output").textContent = "❌ Error: " + e;
+  }
+}
+
+function toggleTheme() {
+  document.body.style.background = document.body.style.background === "black" ? "#fff" : "black";
+  document.body.style.color = document.body.style.color === "lime" ? "black" : "lime";
+}
+
+function startVirus() {
+  const out = document.getElementById("virus-output");
+  let count = 0;
+  out.textContent = "Starting sequence...\n";
+  const interval = setInterval(() => {
+    count += 5;
+    out.textContent += `Deleting system32: ${count}%\n`;
+    if (count >= 100) {
+      clearInterval(interval);
+      out.textContent += "💀 SYSTEM TERMINATED 💀\nJust kidding 😎";
+    }
+  }, 150);
+}
+
+function autoCodeTyper() {
+  const el = document.getElementById("coderain");
+  const lines = [
+    "import os",
+    "os.system('echo Hacker Access Enabled')",
+    "for i in range(5): print(i)",
+    "print('Welcome Nikhil')",
+    "alert('JS works too!')"
+  ];
+  let i = 0;
+  function typeLine() {
+    if (i < lines.length) {
+      el.textContent += lines[i] + "\n";
+      i++;
+      setTimeout(typeLine, 800);
     }
   }
+  typeLine();
+}
 
-  // Typing animation
-  function typeWriter(text, elId) {
-    let i = 0;
-    function type() {
-      if (i < text.length) {
-        document.getElementById(elId).textContent += text.charAt(i);
-        i++;
-        setTimeout(type, 60);
-      }
-    }
-    type();
-  }
-
-  // Dashboard functions
-  function startDashboard() {
-    typeWriter("Welcome, Nikhil 🧠 Root Access Granted", "welcome-text");
-
-    // IP + location
-    fetch("https://ipapi.co/json/")
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("info").innerHTML = `IP: ${data.ip}<br>Location: ${data.city}, ${data.region}, ${data.country_name}`;
-        const map = L.map("map").setView([data.latitude, data.longitude], 10);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "Map data © OpenStreetMap"
-        }).addTo(map);
-        L.marker([data.latitude, data.longitude]).addTo(map);
-        fetch(`https://wttr.in/${data.city}?format=3`)
-          .then(r => r.text())
-          .then(w => document.getElementById("weather").textContent = w);
-      });
-
-    // System info
-    document.getElementById("sysinfo").textContent =
-      "OS: " + navigator.platform + "\n" +
-      "Browser: " + navigator.userAgent + "\n" +
-      "Screen: " + screen.width + "x" + screen.height;
-  }
-
-  // JS command executor
-  function runJS() {
-    const input = document.getElementById("js-input").value;
-    try {
-      const result = eval(input);
-      document.getElementById("output").textContent = result ?? "✅ Code executed.";
-    } catch (e) {
-      document.getElementById("output").textContent = "❌ Error: " + e;
-    }
-  }
-</script>
-
-</body>
-</html>
+function randomCmd() {
+  const cmds = [
+    "nmap -sS -Pn 192.168.1.1",
+    "whoami",
+    "ifconfig | grep inet",
+    "curl wttr.in",
+    "ping -c 4 google.com"
+  ];
+  document.getElementById("commands").textContent = cmds[Math.floor(Math.random() * cmds.length)];
+}
+</script></body>
+    </html>
